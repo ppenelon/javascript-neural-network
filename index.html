@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Neural Network</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="main.js"></script>
+    <style>
+        .neuron-input{
+            display: block;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <table>
+        <tr> <!-- Input layer size -->
+            <td><label for="inputLayerSize">Input layer size : </label></td>
+            <td><input type="text" name="inputLayerSize" id="inputLayerSize"></td>
+        </tr>
+        <tr> <!-- Hidden layer size -->
+            <td><label for="hiddenLayerSize">Hidden layer size : </label></td>
+            <td><input type="text" name="hiddenLayerSize" id="hiddenLayerSize"></td>
+        </tr>
+        <tr> <!-- Output layer size -->
+            <td><label for="outputLayerSize">Output layer size : </label></td>
+            <td><input type="text" name="outputLayerSize" id="outputLayerSize"></td>
+        </tr>
+        <tr> <!-- Learning rate -->
+            <td><label for="learningRate">Learning rate : </label></td>
+            <td><input type="text" name="learningRate" id="learningRate"></td>
+        </tr>
+    </table>
+    <button id="startNewNeuralNetwork">Start new Neural Network</button>
+    
+    <hr>
+
+    <table>
+        <tr>
+            <th>Input</th>
+            <th>Hidden</th>
+            <th>Output</th>
+        </tr>
+        <tr>
+            <td id="inputNeuronsValue">
+                <input type="text" id="input1" class="neuron-input" readonly> <!-- Input 1 -->
+                <input type="text" id="input2" class="neuron-input" readonly> <!-- Input 2 -->
+            </td>
+            <td style="background-color: darkgray">
+            </td>
+            <td id="outputNeuronsValue">
+                <input type="text" id="output1" readonly> <!-- Output 1 -->
+            </td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <button id="more">More</button>
+    <button id="loop">Loop</button><input type="text" size="5" id="loopCount">
+    <table id="tableData">
+        <tr>
+            <th>Inputs</th>
+            <th>Outputs</th>
+        </tr>
+    </table>
+</body>
+</html>
