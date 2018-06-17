@@ -58,8 +58,23 @@
 
     <hr>
 
-    <button id="more">More</button>
-    <button id="loop">Loop</button><input type="text" size="5" id="loopCount">
+    <table>
+        <tr>
+            <td><label for="batchSize">Batch size : </label></td>
+            <td><input type="text" name="batchSize" id="batchSize"></td>
+        </tr>
+        <tr>
+            <td><label for="batchCount">Batch count : </label></td>
+            <td><input type="text" name="batchCount" id="batchCount"></td>
+        </tr>
+        <tr>
+            <td><button id="train">Train</button></td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <button id="addData">Add data</button>
     <table id="tableData">
         <tr>
             <th>Inputs</th>

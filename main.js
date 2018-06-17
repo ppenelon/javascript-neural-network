@@ -75,56 +75,103 @@ class NeuralNetwork{
         ];
     }
 
-    learn(inputs, outputs){
-        // Calcul du résultat du réseau de neurones pour ces entrées
-        let neuralNetworkOutputs = this.evaluate(inputs);
-        let inputOutputs = neuralNetworkOutputs[0];
-        let hiddenOutputs = neuralNetworkOutputs[1];
-        let outputOutputs = neuralNetworkOutputs[2];
-
-        // Gradients de la couche de sortie
-        let gradientsOutput = [];
-        for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
-            // Calcul de l'erreur au niveau du neurone de sortie
-            let error = outputs[i] - outputOutputs[i];
-            // Calcul de la dérivée de la fonction d'activation
-            let dsigmoidValue = NeuralNetwork.dsigmoid(outputOutputs[i]);
-            // Calcul du gradient
-            gradientsOutput.push(error * dsigmoidValue);
-        }
-
-        // Gradient de la couche cachée
-        let gradientsHidden = [];
-        for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone cachée
-            // Calcul de l'erreur (somme de l'erreur des sorties * les poids associés entre le caché et la sortie)
-            let error = 0;
-            for(let j = 0; j < this.outputLayer.length; j++){ // j -> Index du neurone de sortie
-                error += gradientsOutput[j] * this.outputLayer[j].weights[i];
-            }
-            // Calcul de la dérivée partielle de la valeur envoyée par ce neurone caché
-            let dsigmoidValue = NeuralNetwork.dsigmoid(hiddenOutputs[i]);
-            // Calcul du gradient
-            gradientsHidden.push(error * dsigmoidValue);
-        }
-
-        // Modification des poids et des bias des neurones de sortie
+    learn(batchsInput, batchsOutput){
+        // On crée les tableaux qui vont recevoir les sommes de modification des poids et des bias
+        let weightsOutputHiddenModification = [];
+        let biasesOutputModification = [];
         for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
             // Poids
+            let outputNeuronToHiddenNeurons = [];
             for(let j = 0; j < this.hiddenLayer.length; j++){ // j -> Index du neurone caché
-                this.outputLayer[i].weights[j] += this.learningRate * gradientsOutput[i] * hiddenOutputs[j];
+                outputNeuronToHiddenNeurons.push(0);
             }
+            weightsOutputHiddenModification.push(outputNeuronToHiddenNeurons);
             // Bias
-            this.outputLayer[i].bias += this.learningRate * gradientsOutput[i];
+            biasesOutputModification.push(0);
         }
-
-        // Modification des poids et des bias des neurones cachés
+        let weightsHiddenInputModification = [];
+        let biasesHiddenModification = [];
         for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone caché
             // Poids
+            let hiddenNeuronToInputNeurons = [];
             for(let j = 0; j < this.inputLayer.length; j++){ // j -> Index du neurone d'entrée
-                this.hiddenLayer[i].weights[j] += this.learningRate * gradientsHidden[i] * inputOutputs[j];
+                hiddenNeuronToInputNeurons.push(0);
             }
+            weightsHiddenInputModification.push(hiddenNeuronToInputNeurons);
             // Bias
-            this.hiddenLayer[i].bias += this.learningRate * gradientsHidden[i];
+            biasesHiddenModification.push(0);
+        }
+
+        // On parcours tous les batchs
+        for(let batchIndex = 0; batchIndex < batchsInput.length; batchIndex++){
+            // On récupère les entrées/sorties de ce batch
+            let inputs = batchsInput[batchIndex];
+            let outputs = batchsOutput[batchIndex];
+
+            // Calcul du résultat du réseau de neurones pour ces entrées
+            let neuralNetworkOutputs = this.evaluate(inputs);
+            let inputOutputs = neuralNetworkOutputs[0];
+            let hiddenOutputs = neuralNetworkOutputs[1];
+            let outputOutputs = neuralNetworkOutputs[2];
+            
+            // Gradients de la couche de sortie
+            let gradientsOutput = [];
+            for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
+                // Calcul de l'erreur au niveau du neurone de sortie
+                let error = outputs[i] - outputOutputs[i];
+                // Calcul de la dérivée de la fonction d'activation
+                let dsigmoidValue = NeuralNetwork.dsigmoid(outputOutputs[i]);
+                // Calcul du gradient
+                gradientsOutput.push(error * dsigmoidValue);
+            }
+
+            // Gradient de la couche cachée
+            let gradientsHidden = [];
+            for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone cachée
+                // Calcul de l'erreur (somme de l'erreur des sorties * les poids associés entre le caché et la sortie)
+                let error = 0;
+                for(let j = 0; j < this.outputLayer.length; j++){ // j -> Index du neurone de sortie
+                    error += gradientsOutput[j] * this.outputLayer[j].weights[i];
+                }
+                // Calcul de la dérivée partielle de la valeur envoyée par ce neurone caché
+                let dsigmoidValue = NeuralNetwork.dsigmoid(hiddenOutputs[i]);
+                // Calcul du gradient
+                gradientsHidden.push(error * dsigmoidValue);
+            }
+
+            // Modification des poids et des bias des neurones de sortie
+            for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
+                // Poids
+                for(let j = 0; j < this.hiddenLayer.length; j++){ // j -> Index du neurone caché
+                    weightsOutputHiddenModification[i][j] += this.learningRate * gradientsOutput[i] * hiddenOutputs[j];
+                }
+                // Bias
+                biasesOutputModification[i] += this.learningRate * gradientsOutput[i];
+            }
+
+            // Modification des poids et des bias des neurones cachés
+            for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone caché
+                // Poids
+                for(let j = 0; j < this.inputLayer.length; j++){ // j -> Index du neurone d'entrée
+                    weightsHiddenInputModification[i][j] += this.learningRate * gradientsHidden[i] * inputOutputs[j];
+                }
+                // Bias
+                biasesHiddenModification[i] += this.learningRate * gradientsHidden[i];
+            }
+        }
+
+        // On applique les modifications calculées aux poids et aux bias
+        for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
+            for(let j = 0; j < this.hiddenLayer.length; j++){ // j -> Index du neurone caché
+                this.outputLayer[i].weights[j] += weightsOutputHiddenModification[i][j];
+            }
+            this.outputLayer[i].bias += biasesOutputModification[i];
+        }
+        for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone caché
+            for(let j = 0; j < this.inputLayer.length; j++){ // j -> Index du neurone d'entrée
+                this.hiddenLayer[i].weights[j] += weightsHiddenInputModification[i][j];
+            }
+            this.hiddenLayer[i].bias += biasesHiddenModification[i];
         }
     }
 
@@ -150,9 +197,10 @@ window.onload = function(){
         inputNeuronsValue: document.getElementById('inputNeuronsValue'),
         outputNeuronsValue: document.getElementById('outputNeuronsValue'),
         tableData: document.getElementById('tableData'),
-        more: document.getElementById('more'),
-        loop: document.getElementById('loop'),
-        loopCount: document.getElementById('loopCount')
+        addData: document.getElementById('addData'),
+        train: document.getElementById('train'),
+        batchSize: document.getElementById('batchSize'),
+        batchCount: document.getElementById('batchCount')
     }
 
     // Elements HTML des neurones
@@ -180,7 +228,7 @@ window.onload = function(){
     }
 
     // Réinitialise les données du réseau avec les nouvelles valeurs
-    // TODO : momentum + batch size + learning rate evolutif
+    // TODO : momentum + batch size + learning rate evolutif + calcul erreur
 
     // Crée un nouvel réseau neuronal et remplace l'actuel
     function startNewNeuralNetwork(inputLayerSize, hiddenLayerSize, outputLayerSize, learningRate){
@@ -215,7 +263,7 @@ window.onload = function(){
     }
 
     // Ajoute des lignes au tableau
-    elements.more.onclick = function(){
+    elements.addData.onclick = function(){
         // Nouvelle ligne
         let newRow = elements.tableData.insertRow();
         // Cellule qui regroupe les inputs
@@ -238,25 +286,6 @@ window.onload = function(){
             inputsOutputValue[i].value = 0;
             outputCell.appendChild(inputsOutputValue[i]);
         }
-        // Cellule qui contient le bouton d'entrainement
-        let trainCell = newRow.insertCell();
-        let trainButton = document.createElement('button');
-        trainButton.innerText = 'Train';
-        trainButton.onclick = function(){
-            // On récupère les entrées
-            let inputs = [];
-            for(let inputElement of inputsInputValue){
-                inputs.push(inputElement.value);
-            }
-            // On récupère les sorties
-            let outputs = [];
-            for(let outputElement of inputsOutputValue){
-                outputs.push(outputElement.value);
-            }
-            // On entraine le réseau
-            neuralNetwork.learn(inputs, outputs);
-        }
-        trainCell.appendChild(trainButton);
         // Cellule qui contient le bouton de determination
         let determineCell = newRow.insertCell();
         let determineButton = document.createElement('button');
@@ -295,16 +324,33 @@ window.onload = function(){
     }
 
     // Boucle sur les données d'entrainement
-    elements.loop.onclick = function(){
-        // On regarde si le nombre de boucle est bien un nombre et supérieur à 0
-        let loopCount = parseInt(elements.loopCount.value);
-        if(isNaN(loopCount) || loopCount <= 0){
-            return;
-        }
-        // On lance l'entrainement loopCount fois
-        for(let i = 0; i < loopCount; i++){
-            let trainingDataIndex = Math.floor(Math.random() * (elements.tableData.children[0].childElementCount - 1)) + 1; // Le +1 évite le <tr> avec les <th>
-            elements.tableData.children[0].children[trainingDataIndex].children[2].children[0].onclick(); // On simule le click sur cette fonction d'entrainement
+    elements.train.onclick = function(){
+        // On récupère les paramètres de batchs
+        let batchSize = parseInt(elements.batchSize.value);
+        let batchCount = parseInt(elements.batchCount.value);
+        // Création de batchCount batchs de taille batchSize
+        for(let i = 0; i < batchCount; i++){ // i -> Index du batch
+            let batchInput = [];
+            let batchOutput = [];
+            for(let j = 0; j < batchSize; j++){ // j -> Index de l'élément (inputs) dans le batch
+                let inputs = [];
+                let outputs = [];
+                // On récupère l'index d'une donnée d'entrainement au hasard
+                let trainingDataIndex = Math.floor(Math.random() * (elements.tableData.children[0].childElementCount - 1)) + 1; // Le +1 évite le <tr> avec les <th>
+                // Sauvegarde des entrées de cette donnée d'entrainement
+                for(let inputTrainingData of elements.tableData.children[0].children[trainingDataIndex].children[0].children){
+                    inputs.push(parseFloat(inputTrainingData.value));
+                }
+                // Sauvegarde des sorties de cette donnée d'entrainement
+                for(let outputTrainingData of elements.tableData.children[0].children[trainingDataIndex].children[1].children){
+                    outputs.push(parseFloat(outputTrainingData.value));
+                }
+                // Ajout de la données d'entrainement au batch
+                batchInput.push(inputs);
+                batchOutput.push(outputs);
+            }
+            // Envoi du batch au réseau de neurones pour l'entrainement
+            neuralNetwork.learn(batchInput, batchOutput);
         }
     }
 }
