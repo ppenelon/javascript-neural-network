@@ -12,37 +12,70 @@
             display: block;
             margin: 5px;
         }
+        .layer-background{
+            background-color: darkgray;
+        }
     </style>
 </head>
 <body>
 
+    <button id="printNeuralNetwork">Print neural network</button>
+    <span style="font-weight: bold;">To add : Momentum + learning rate progressif + affichage erreur</span>
+
+    <hr>
+
+    <div style="overflow-x: auto;">
+        <table id="tableNeuralNetworksLayersSettings">
+            <tr>
+                <th></th>
+                <th>Input</th>
+                <th>Hidden</th>
+                <th>Output</th>
+            </tr>
+            <tr>
+                <th align="right">Layer size</th>
+                <td><input type="text" size="6" value="2" style="text-align: center;"></td>
+                <td><input type="text" size="6" value="2" style="text-align: center;"></td>
+                <td><input type="text" size="6" value="1" style="text-align: center;"></td>
+            </tr>
+            <tr>
+                <th align="right" style="width: 140px;">Activation functions</th>
+                <td></td>
+                <td>
+                    <select id="activationFunction">
+                        <option value="sigmoid">Sigmoid</option>
+                        <option value="relu">ReLU</option>
+                        <option value="linear">Linear</option>
+                    </select>
+                </td>
+                <td>
+                    <select id="activationFunction">
+                        <option value="sigmoid">Sigmoid</option>
+                        <option value="relu">ReLU</option>
+                        <option value="linear">Linear</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <br>
+
+    <button id="addHiddenLayer">Add hidden layer</button>
+    <button id="deleteHiddenLayer">Delete last hidden layer</button>
+
+    <br>
+    <br>
+
     <table>
-        <tr> <!-- Input layer size -->
-            <td><label for="inputLayerSize">Input layer size : </label></td>
-            <td><input type="text" name="inputLayerSize" id="inputLayerSize"></td>
-        </tr>
-        <tr> <!-- Hidden layer size -->
-            <td><label for="hiddenLayerSize">Hidden layer size : </label></td>
-            <td><input type="text" name="hiddenLayerSize" id="hiddenLayerSize"></td>
-        </tr>
-        <tr> <!-- Output layer size -->
-            <td><label for="outputLayerSize">Output layer size : </label></td>
-            <td><input type="text" name="outputLayerSize" id="outputLayerSize"></td>
-        </tr>
         <tr> <!-- Learning rate -->
             <td><label for="learningRate">Learning rate : </label></td>
-            <td><input type="text" name="learningRate" id="learningRate"></td>
-        </tr>
-        <tr> <!-- Activation function -->
-            <td><label for="activationFunction">Activation function : </label></td>
-            <td>
-                <select id="activationFunction">
-                    <option value="sigmoid">Sigmoid</option>
-                    <option value="relu">ReLU</option>
-                </select>
-            </td>
+            <td><input type="text" name="learningRate" id="learningRate" value="0.03"></td>
         </tr>
     </table>
+
+    <br>
+
     <button id="startNewNeuralNetwork">Start new Neural Network</button>
     
     <hr>
@@ -50,19 +83,13 @@
     <table>
         <tr>
             <th>Input</th>
-            <th>Hidden</th>
+            <th>Hidden(s)</th>
             <th>Output</th>
         </tr>
         <tr>
-            <td id="inputNeuronsValue">
-                <input type="text" id="input1" class="neuron-input" readonly> <!-- Input 1 -->
-                <input type="text" id="input2" class="neuron-input" readonly> <!-- Input 2 -->
-            </td>
-            <td style="background-color: darkgray">
-            </td>
-            <td id="outputNeuronsValue">
-                <input type="text" id="output1" readonly> <!-- Output 1 -->
-            </td>
+            <td id="inputNeuronsValue"></td>
+            <td class="layer-background"></td>
+            <td id="outputNeuronsValue"></td>
         </tr>
     </table>
 

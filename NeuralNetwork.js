@@ -21,6 +21,13 @@ class ActivationFunction{
             y => y <= 0 ? 0 : 1
         );
     }
+
+    static linear(){
+        return new ActivationFunction(
+            x => x,
+            y => 1
+        );
+    }
 }
 
 class Neuron{
@@ -52,155 +59,152 @@ class Neuron{
     }
 }
 
-class NeuralNetwork{
+class Layer{
 
-    // learningRate; // Taux d'apprentissage
+    // neurons; // Neurones de cette couche
+    // activationFunction; // Fonction d'activation de cette couche
 
-    // inputLayer; // Couche d'entrée
-    // hiddenLayer; // Couche cachée
-    // outputLayer; // Couche de sortie
-
-    // activationFunction; // Fonction d'activation choisie
-
-    constructor(nbInput, nbHidden, nbOutput, learningRate = 0.03, activationFunction = ActivationFunction.sigmoid()){
-        // Création des neurones de la couche d'entrée
-        this.inputLayer = [];
-        for(let i = 0; i < nbInput; i++){
-            this.inputLayer.push(new Neuron(0));
+    constructor(layerSize, previousLayerSize, activationFunction){
+        // Génération des neurones de cette couche
+        this.neurons = [];
+        for(let i = 0; i < layerSize; i++){
+            this.neurons.push(new Neuron(previousLayerSize));
         }
-        // Création des neurones de la couche cachée
-        this.hiddenLayer = [];
-        for(let i = 0; i < nbHidden; i++){
-            this.hiddenLayer.push(new Neuron(nbInput));
-        }
-        // Création des neurones de la couche de sortie
-        this.outputLayer = [];
-        for(let i = 0; i < nbOutput; i++){
-            this.outputLayer.push(new Neuron(nbHidden));
-        }
-        // Taux d'apprentissage
-        this.learningRate = learningRate;
-        // Fonction d'activation
+        // Enregistrement de la fonction d'activation
         this.activationFunction = activationFunction;
     }
 
-    // Evalue le resultat de valeur dans le réseau de neurones
+    // Evalue le résultat de ses neurones par rapport aux valeurs envoyées de la couche précédente
     evaluate(inputs){
-        // Calcul de la sortie des neurones de la couche cachée
-        let hiddenOutput = [];
-        for(let hiddenNeuron of this.hiddenLayer){
-            hiddenOutput.push(hiddenNeuron.evaluate(inputs, this.activationFunction));
+        let outputs = [];
+        for(let neuron of this.neurons){
+            outputs.push(neuron.evaluate(inputs, this.activationFunction));
         }
-        // Calcul de la sortie des neurones de la couche de sortie
-        let outputOutput = [];
-        for(let outputNeuron of this.outputLayer){
-            outputOutput.push(outputNeuron.evaluate(hiddenOutput, this.activationFunction));
-        }
-        // On retourne la sortie des neurones de toutes les couches du réseau de neurones
-        return [
-            inputs,
-            hiddenOutput,
-            outputOutput
-        ];
+        return outputs;
+    }
+}
+
+class NeuralNetwork{
+
+    // layers; // Couches du réseau de neurones
+    // learningRate; // Taux d'apprentissage
+
+    constructor(learningRate = 0.03){
+        // Taux d'apprentissage
+        this.learningRate = learningRate;
+        // Couches
+        this.layers = [];
     }
 
-    learn(batchsInput, batchsOutput){
-        // On crée les tableaux qui vont recevoir les sommes de modification des poids et des bias
-        let weightsOutputHiddenModification = [];
-        let biasesOutputModification = [];
-        for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
-            // Poids
-            let outputNeuronToHiddenNeurons = [];
-            for(let j = 0; j < this.hiddenLayer.length; j++){ // j -> Index du neurone caché
-                outputNeuronToHiddenNeurons.push(0);
-            }
-            weightsOutputHiddenModification.push(outputNeuronToHiddenNeurons);
-            // Bias
-            biasesOutputModification.push(0);
+    addLayer(layerSize, activationFunction){
+        this.layers.push(
+            new Layer(
+                layerSize, 
+                this.layers.length > 0 ? this.layers[this.layers.length - 1].neurons.length : 0, // Taille de la couche précédente ou 0 si il n'y a pas de couche précédente (couche d'entrée)
+                activationFunction
+            )
+        );
+    }
+
+    // Feed-forward (= calcul la/les sortie/s du réseau de neurones sur une/des valeur/s d'entrée) et renvoie les sorties de toutes les couches
+    evaluate(inputs){
+        let layersOutputs = [inputs];
+        for(let i = 1; i < this.layers.length; i++){ // i = 1 car on skip la couche d'entrée, et oui, on a déjà les valeurs (inputs)
+            layersOutputs.push(this.layers[i].evaluate(layersOutputs[layersOutputs.length - 1])); // On entraine la couche suivante avec les sorties trouvées l'itération précédente
         }
-        let weightsHiddenInputModification = [];
-        let biasesHiddenModification = [];
-        for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone caché
-            // Poids
-            let hiddenNeuronToInputNeurons = [];
-            for(let j = 0; j < this.inputLayer.length; j++){ // j -> Index du neurone d'entrée
-                hiddenNeuronToInputNeurons.push(0);
+        return layersOutputs;
+    }
+
+    // Backpropagation avec batchs (= apprentissage)
+    learn(batchInputs, batchOutputs){
+        // Tableau qui va recevoir la somme de toutes les modifications des poids de tous les neurones de toutes les couches
+        let weightsModification = [];
+        let biasesModification = []; // Idem pour le bias
+        // Pour chaque couche du réseau de neurones
+        for(let layerIndex = 1; layerIndex < this.layers.length; layerIndex++){
+            let arrayWeights1 = [];
+            let arrayBiases1 = [];
+            // Pour chaque neurone de la couche
+            for(let neuronIndex = 0; neuronIndex < this.layers[layerIndex].neurons.length; neuronIndex++){
+                let arrayWeights2 = [];
+                // Pour chaque poids du neurone
+                for(let weightIndex = 0; weightIndex < this.layers[layerIndex].neurons[neuronIndex].weights.length; weightIndex++){
+                    arrayWeights2.push(0);
+                }
+                arrayWeights1.push(arrayWeights2);
+                arrayBiases1.push(0);
             }
-            weightsHiddenInputModification.push(hiddenNeuronToInputNeurons);
-            // Bias
-            biasesHiddenModification.push(0);
+            weightsModification.push(arrayWeights1);
+            biasesModification.push(arrayBiases1);
         }
 
         // On parcours tous les batchs
-        for(let batchIndex = 0; batchIndex < batchsInput.length; batchIndex++){
+        for(let batchIndex = 0; batchIndex < batchInputs.length; batchIndex++){
             // On récupère les entrées/sorties de ce batch
-            let inputs = batchsInput[batchIndex];
-            let outputs = batchsOutput[batchIndex];
+            let inputs = batchInputs[batchIndex];
+            let outputs = batchOutputs[batchIndex];
 
             // Calcul du résultat du réseau de neurones pour ces entrées
             let neuralNetworkOutputs = this.evaluate(inputs);
-            let inputOutputs = neuralNetworkOutputs[0];
-            let hiddenOutputs = neuralNetworkOutputs[1];
-            let outputOutputs = neuralNetworkOutputs[2];
-            
-            // Gradients de la couche de sortie
-            let gradientsOutput = [];
-            for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
-                // Calcul de l'erreur au niveau du neurone de sortie
-                let error = outputs[i] - outputOutputs[i]; // cible - sortie (outputs[i] - outputOutputs[i])
-                // Calcul de la dérivée de la fonction d'activation
-                let dsigmoidValue = this.activationFunction.der(outputOutputs[i]);
-                // Calcul du gradient
-                gradientsOutput.push(error * dsigmoidValue);
+
+            // Calcul des gradients des couches
+            let gradients = Array(this.layers.length - 1); // - 1 car on ne veut pas la couche d'entrée et c'est un tableau qu'on va remplir en partant de la fin, d'où l'initialisation
+            for(let layerIndex = this.layers.length - 1; layerIndex > 0; layerIndex--){ // On commence donc par la dernière couche
+                let layerGradients = [];
+                // Pour chaque neurone de cette couche
+                for(let neuronIndex = 0; neuronIndex < this.layers[layerIndex].neurons.length; neuronIndex++){
+                    // Calcul de l'erreur
+                    let error = 0
+                    if(layerIndex === this.layers.length - 1){ // Si c'est la couche de sortie, on calcul le gradient différemment
+                        error = outputs[neuronIndex] - neuralNetworkOutputs[layerIndex][neuronIndex]; // cible - sortie
+                    }
+                    else{ // Pour le reste des couches, c'est le même calcul (somme des gradients précédents * les poids associés entre ce neurone et les précédents)
+                        // Pour chaque neurone de la couche suivante
+                        for(let nextNeuronIndex = 0; nextNeuronIndex < this.layers[layerIndex + 1].neurons.length; nextNeuronIndex++){
+                            error += gradients[layerIndex][nextNeuronIndex] * this.layers[layerIndex + 1].neurons[nextNeuronIndex].weights[neuronIndex];
+                            // layerGradients[layerIndex] et pas layerGradients[layerIndex + 1] car le tableau des gradients ne contient pas la couche d'entrée
+                        }
+                    }
+                    // Calcul de la dérivée de la fonction d'activation
+                    let dsigmoidValue = this.layers[layerIndex].activationFunction.der(neuralNetworkOutputs[layerIndex][neuronIndex]);
+                    // Calcul du gradient
+                    layerGradients.push(error * dsigmoidValue);
+                }
+                gradients[layerIndex - 1] = layerGradients;
             }
 
-            // Gradient de la couche cachée
-            let gradientsHidden = [];
-            for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone cachée
-                // Calcul de l'erreur (somme de l'erreur des sorties * les poids associés entre le caché et la sortie)
-                let error = 0;
-                for(let j = 0; j < this.outputLayer.length; j++){ // j -> Index du neurone de sortie
-                    error += gradientsOutput[j] * this.outputLayer[j].weights[i];
+            // Calcul de la modification des poids et des bias
+            // Pour chaque couche (sans l'entrée)
+            for(let layerIndex = 1; layerIndex < this.layers.length; layerIndex++){
+                let layerIndexWithoutInputLayer = layerIndex - 1;
+                // Pour chaque neurone de la couche
+                for(let neuronIndex = 0; neuronIndex < this.layers[layerIndex].neurons.length; neuronIndex++){
+                    // Poids
+                    // Pour chaque poids du neurone
+                    for(let weightIndex = 0; weightIndex < this.layers[layerIndex].neurons[neuronIndex].weights.length; weightIndex++){
+                        // Learning rate * gradient du neurone * Sortie de la couche précédente
+                        weightsModification[layerIndexWithoutInputLayer][neuronIndex][weightIndex] += this.learningRate * gradients[layerIndexWithoutInputLayer][neuronIndex] * neuralNetworkOutputs[layerIndex - 1][weightIndex];
+                    }
+                    // Bias
+                    biasesModification[layerIndexWithoutInputLayer][neuronIndex] += this.learningRate * gradients[layerIndexWithoutInputLayer][neuronIndex] * 1; // x 1 car le bias a une valeur de 1
                 }
-                // Calcul de la dérivée partielle de la valeur envoyée par ce neurone caché
-                let dsigmoidValue = this.activationFunction.der(hiddenOutputs[i]);
-                // Calcul du gradient
-                gradientsHidden.push(error * dsigmoidValue);
-            }
-
-            // Modification des poids et des bias des neurones de sortie
-            for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
-                // Poids
-                for(let j = 0; j < this.hiddenLayer.length; j++){ // j -> Index du neurone caché
-                    weightsOutputHiddenModification[i][j] += this.learningRate * gradientsOutput[i] * hiddenOutputs[j];
-                }
-                // Bias
-                biasesOutputModification[i] += this.learningRate * gradientsOutput[i];
-            }
-
-            // Modification des poids et des bias des neurones cachés
-            for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone caché
-                // Poids
-                for(let j = 0; j < this.inputLayer.length; j++){ // j -> Index du neurone d'entrée
-                    weightsHiddenInputModification[i][j] += this.learningRate * gradientsHidden[i] * inputOutputs[j];
-                }
-                // Bias
-                biasesHiddenModification[i] += this.learningRate * gradientsHidden[i];
             }
         }
 
-        // On applique les modifications calculées aux poids et aux bias
-        for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
-            for(let j = 0; j < this.hiddenLayer.length; j++){ // j -> Index du neurone caché
-                this.outputLayer[i].weights[j] += weightsOutputHiddenModification[i][j];
+        // Une fois que le batch d'entrée et le batch de sortie a été entièrement parcouru, on modifie les poids et les bias
+        // Pour chaque couche (sauf celle d'entrée)
+        for(let layerIndex = 1; layerIndex < this.layers.length; layerIndex++){
+            let layerIndexWithoutInputLayer = layerIndex - 1;
+            //Pour chaque neurone de la couche
+            for(let neuronIndex = 0; neuronIndex < this.layers[layerIndex].neurons.length; neuronIndex++){
+                // Poids
+                // Pour chaque poids du neurone
+                for(let weightIndex = 0; weightIndex < this.layers[layerIndex].neurons[neuronIndex].weights.length; weightIndex++){
+                    this.layers[layerIndex].neurons[neuronIndex].weights[weightIndex] += weightsModification[layerIndexWithoutInputLayer][neuronIndex][weightIndex];
+                }
+                // Bias
+                this.layers[layerIndex].neurons[neuronIndex].bias += biasesModification[layerIndexWithoutInputLayer][neuronIndex];
             }
-            this.outputLayer[i].bias += biasesOutputModification[i];
-        }
-        for(let i = 0; i < this.hiddenLayer.length; i++){ // i -> Index du neurone caché
-            for(let j = 0; j < this.inputLayer.length; j++){ // j -> Index du neurone d'entrée
-                this.hiddenLayer[i].weights[j] += weightsHiddenInputModification[i][j];
-            }
-            this.hiddenLayer[i].bias += biasesHiddenModification[i];
         }
     }
 }
