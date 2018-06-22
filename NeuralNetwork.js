@@ -82,8 +82,6 @@ class NeuralNetwork{
         this.learningRate = learningRate;
         // Fonction d'activation
         this.activationFunction = activationFunction;
-
-        console.log(this);
     }
 
     // Evalue le resultat de valeur dans le réseau de neurones
@@ -189,8 +187,6 @@ class NeuralNetwork{
                 // Bias
                 biasesHiddenModification[i] += this.learningRate * gradientsHidden[i];
             }
-
-            console.log(this);
         }
 
         // On applique les modifications calculées aux poids et aux bias

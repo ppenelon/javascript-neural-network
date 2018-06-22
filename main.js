@@ -5,6 +5,7 @@ window.onload = function(){
         hiddenLayerSize: document.getElementById('hiddenLayerSize'),
         outputLayerSize: document.getElementById('outputLayerSize'),
         learningRate: document.getElementById('learningRate'),
+        activationFunction: document.getElementById('activationFunction'),
         startNewNeuralNetwork: document.getElementById('startNewNeuralNetwork'),
         inputNeuronsValue: document.getElementById('inputNeuronsValue'),
         outputNeuronsValue: document.getElementById('outputNeuronsValue'),
@@ -20,8 +21,8 @@ window.onload = function(){
     let elementsOutput = [];
 
     // Réseau de neurones
-    let neuralNetwork = new NeuralNetwork(2, 2, 1, 0.01); // La création du réseau ici (alors qu'il est recréé juste en dessous) permet d'avoir accès à l'auto-completion
-    startNewNeuralNetwork(2, 2, 1, 0.1, ActivationFunction.sigmoid());
+    let neuralNetwork = new NeuralNetwork(2, 2, 1, 0.03); // La création du réseau ici (alors qu'il est recréé juste en dessous) permet d'avoir accès à l'auto-completion
+    startNewNeuralNetwork(2, 2, 1, 0.03, ActivationFunction.sigmoid());
 
     // Affichage des données du réseau de neurones
     elements.inputLayerSize.value = neuralNetwork.inputLayer.length;
@@ -31,12 +32,17 @@ window.onload = function(){
 
     // Fonction qui redemarre un nouveau réseau de neurones avec des paramètres précis
     elements.startNewNeuralNetwork.onclick = function(){
+        // Récupération de la fonction d'activation
+        let activationFunction;
+        if(elements.activationFunction.value === "sigmoid") activationFunction = ActivationFunction.sigmoid();
+        if(elements.activationFunction.value === "relu") activationFunction = ActivationFunction.relu();
+        // Création du réseau de neurones
         startNewNeuralNetwork(
             parseInt(elements.inputLayerSize.value),
             parseInt(elements.hiddenLayerSize.value),
             parseInt(elements.outputLayerSize.value),
             parseFloat(elements.learningRate.value),
-            ActivationFunction.sigmoid()
+            activationFunction
         );
     }
 
