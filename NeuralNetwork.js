@@ -1,3 +1,28 @@
+class ActivationFunction{
+    
+    // func; // Fonction d'activation
+    // der; // Dérivée de la fonction d'activation
+
+    constructor(func, der){
+        this.func = func;
+        this.der = der;
+    }
+
+    static sigmoid(){
+        return new ActivationFunction(
+            x => 1 / (1 + Math.exp(-1 * x)),
+            y => y * (1 - y)
+        );
+    }
+
+    static relu(){
+        return new ActivationFunction(
+            x => x <= 0 ? 0 : x,
+            y => y <= 0 ? 0 : 1
+        );
+    }
+}
+
 class Neuron{
 
     // weights = 0; // Poids de tous les neurones de la couche précédente vers ce neurone
@@ -14,7 +39,7 @@ class Neuron{
     }
 
     // Calcule la sortie du neurone
-    evaluate(inputs){
+    evaluate(inputs, activationFunction){
         // Somme des valeurs d'entrées * les poids
         let value = 0;
         for(let i = 0; i < this.weights.length; i++){
@@ -23,7 +48,7 @@ class Neuron{
         // On ajoute le bias
         value += this.bias;
         // On applique la fonction d'activation
-        return NeuralNetwork.sigmoid(value);
+        return activationFunction.func(value);
     }
 }
 
@@ -35,7 +60,9 @@ class NeuralNetwork{
     // hiddenLayer; // Couche cachée
     // outputLayer; // Couche de sortie
 
-    constructor(nbInput, nbHidden, nbOutput, learningRate){
+    // activationFunction; // Fonction d'activation choisie
+
+    constructor(nbInput, nbHidden, nbOutput, learningRate = 0.03, activationFunction = ActivationFunction.sigmoid()){
         // Création des neurones de la couche d'entrée
         this.inputLayer = [];
         for(let i = 0; i < nbInput; i++){
@@ -53,6 +80,10 @@ class NeuralNetwork{
         }
         // Taux d'apprentissage
         this.learningRate = learningRate;
+        // Fonction d'activation
+        this.activationFunction = activationFunction;
+
+        console.log(this);
     }
 
     // Evalue le resultat de valeur dans le réseau de neurones
@@ -60,12 +91,12 @@ class NeuralNetwork{
         // Calcul de la sortie des neurones de la couche cachée
         let hiddenOutput = [];
         for(let hiddenNeuron of this.hiddenLayer){
-            hiddenOutput.push(hiddenNeuron.evaluate(inputs));
+            hiddenOutput.push(hiddenNeuron.evaluate(inputs, this.activationFunction));
         }
         // Calcul de la sortie des neurones de la couche de sortie
         let outputOutput = [];
         for(let outputNeuron of this.outputLayer){
-            outputOutput.push(outputNeuron.evaluate(hiddenOutput));
+            outputOutput.push(outputNeuron.evaluate(hiddenOutput, this.activationFunction));
         }
         // On retourne la sortie des neurones de toutes les couches du réseau de neurones
         return [
@@ -118,9 +149,9 @@ class NeuralNetwork{
             let gradientsOutput = [];
             for(let i = 0; i < this.outputLayer.length; i++){ // i -> Index du neurone de sortie
                 // Calcul de l'erreur au niveau du neurone de sortie
-                let error = outputs[i] - outputOutputs[i];
+                let error = outputs[i] - outputOutputs[i]; // cible - sortie (outputs[i] - outputOutputs[i])
                 // Calcul de la dérivée de la fonction d'activation
-                let dsigmoidValue = NeuralNetwork.dsigmoid(outputOutputs[i]);
+                let dsigmoidValue = this.activationFunction.der(outputOutputs[i]);
                 // Calcul du gradient
                 gradientsOutput.push(error * dsigmoidValue);
             }
@@ -134,7 +165,7 @@ class NeuralNetwork{
                     error += gradientsOutput[j] * this.outputLayer[j].weights[i];
                 }
                 // Calcul de la dérivée partielle de la valeur envoyée par ce neurone caché
-                let dsigmoidValue = NeuralNetwork.dsigmoid(hiddenOutputs[i]);
+                let dsigmoidValue = this.activationFunction.der(hiddenOutputs[i]);
                 // Calcul du gradient
                 gradientsHidden.push(error * dsigmoidValue);
             }
@@ -158,6 +189,8 @@ class NeuralNetwork{
                 // Bias
                 biasesHiddenModification[i] += this.learningRate * gradientsHidden[i];
             }
+
+            console.log(this);
         }
 
         // On applique les modifications calculées aux poids et aux bias
@@ -173,15 +206,5 @@ class NeuralNetwork{
             }
             this.hiddenLayer[i].bias += biasesHiddenModification[i];
         }
-    }
-
-    // Fonction d'activation
-    static sigmoid(x){
-        return 1 / (1 + Math.exp(-1 * x));
-    }
-
-    // Dérivée de la fonction d'activation (sachant que le paramètre y est une valeur déjà passée dans la fonction d'activation)
-    static dsigmoid(y){
-        return y * (1 - y);
     }
 }

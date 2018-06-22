@@ -21,7 +21,7 @@ window.onload = function(){
 
     // Réseau de neurones
     let neuralNetwork = new NeuralNetwork(2, 2, 1, 0.01); // La création du réseau ici (alors qu'il est recréé juste en dessous) permet d'avoir accès à l'auto-completion
-    startNewNeuralNetwork(2, 2, 1, 0.1);
+    startNewNeuralNetwork(2, 2, 1, 0.1, ActivationFunction.sigmoid());
 
     // Affichage des données du réseau de neurones
     elements.inputLayerSize.value = neuralNetwork.inputLayer.length;
@@ -35,7 +35,8 @@ window.onload = function(){
             parseInt(elements.inputLayerSize.value),
             parseInt(elements.hiddenLayerSize.value),
             parseInt(elements.outputLayerSize.value),
-            parseFloat(elements.learningRate.value)
+            parseFloat(elements.learningRate.value),
+            ActivationFunction.sigmoid()
         );
     }
 
@@ -43,9 +44,9 @@ window.onload = function(){
     // TODO : momentum + learning rate evolutif + calcul erreur
 
     // Crée un nouvel réseau neuronal et remplace l'actuel
-    function startNewNeuralNetwork(inputLayerSize, hiddenLayerSize, outputLayerSize, learningRate){
+    function startNewNeuralNetwork(inputLayerSize, hiddenLayerSize, outputLayerSize, learningRate, activationFunction){
         // Création du nouveau réseau
-        neuralNetwork = new NeuralNetwork(inputLayerSize, hiddenLayerSize, outputLayerSize, learningRate);
+        neuralNetwork = new NeuralNetwork(inputLayerSize, hiddenLayerSize, outputLayerSize, learningRate, activationFunction);
         // Modification du réseau de neurones visuels
         elementsInput = []; // Références vers les éléments DOM
         while(elements.inputNeuronsValue.firstChild) elements.inputNeuronsValue.removeChild(elements.inputNeuronsValue.firstChild); // On supprime tous les inputs de la valeur des neurones d'entrée
